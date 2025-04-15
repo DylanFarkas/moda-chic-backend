@@ -14,6 +14,7 @@ class User(AbstractUser):
         blank=True,
         help_text='The groups this user belongs to.',
         verbose_name='groups'
+        
     )
     user_permissions = models.ManyToManyField(
         'auth.Permission',
