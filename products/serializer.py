@@ -9,6 +9,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
     category_name = CategorySerializer(source='category', read_only=True)
+    #image = serializers.ImageField(required=False, allow_null=True)
     
     class Meta:
         model = Product
