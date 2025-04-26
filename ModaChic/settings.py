@@ -66,6 +66,16 @@ SIMPLE_JWT = {
 }
 
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'modachic025@gmail.com'  # El correo que enviarás los emails
+EMAIL_HOST_PASSWORD = 'mwqf zabs rujv wfzh'  # No uses la contraseña normal
+DEFAULT_FROM_EMAIL = 'modachic025@gmail.com'
+
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
