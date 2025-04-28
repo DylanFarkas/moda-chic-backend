@@ -4,6 +4,7 @@ from .models import User
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+import re
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,6 +18,15 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'password')
+
+    def validate_password(self, value):
+        # Mínimo 6 caracteres
+        if len(value) < 6:
+            raise serializers.ValidationError("La contraseña debe tener al menos 6 caracteres.")
+        # Al menos un caracter especial
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
+            raise serializers.ValidationError("La contraseña debe contener al menos un caracter especial (!@#$%^&*(),.?\":{}|<>).")
+        return value
 
     def create(self, validated_data):
         user = User.objects.create_user(
