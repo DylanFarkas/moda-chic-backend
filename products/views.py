@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser, FormParser
 from .serializer import ProductSerializer, CategorySerializer, SizeSerializer
-from .models import Product, Category, Size, ProductSizeStock
+from .models import Product, Category, Size, ProductSizeStock, ProductImage
 import json
 
 class ProductView(viewsets.ModelViewSet):
@@ -12,55 +12,43 @@ class ProductView(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         product = serializer.save()
 
-        # Obtener y parsear el JSON con tallas y stock
+        # Tallas y stock
         sizes_json = self.request.data.get("sizes_json")
         if sizes_json:
             try:
                 size_stock_data = json.loads(sizes_json)
                 for item in size_stock_data:
-                    size_name = item.get("size")
-                    stock = item.get("stock")
+                    size = Size.objects.get(name=item["size"])
+                    ProductSizeStock.objects.create(product=product, size=size, stock=item["stock"])
+            except Exception:
+                pass
 
-                    try:
-                        size = Size.objects.get(name=size_name)
-                        ProductSizeStock.objects.create(
-                            product=product,
-                            size=size,
-                            stock=stock
-                        )
-                    except Size.DoesNotExist:
-                        continue  # O podrías lanzar un error personalizado
-            except json.JSONDecodeError:
-                pass  # Manejo opcional de error
-    
+        # Imágenes adicionales
+        additional_images = self.request.FILES.getlist("additional_images")
+        for image in additional_images:
+            ProductImage.objects.create(product=product, image=image)
+
     def perform_update(self, serializer):
         product = serializer.save()
 
-        # Obtener y parsear el JSON con las tallas y stock para actualizar
+        # Tallas y stock
         sizes_json = self.request.data.get("sizes_json")
         if sizes_json:
             try:
-                size_stock_data = json.loads(sizes_json)
-
-                # Eliminar las tallas actuales asociadas al producto antes de agregar las nuevas
                 product.size_stock.all().delete()
-
+                size_stock_data = json.loads(sizes_json)
                 for item in size_stock_data:
-                    size_name = item.get("size")
-                    stock = item.get("stock")
+                    size = Size.objects.get(name=item["size"])
+                    ProductSizeStock.objects.create(product=product, size=size, stock=item["stock"])
+            except Exception:
+                pass
 
-                    try:
-                        size = Size.objects.get(name=size_name)
-                        ProductSizeStock.objects.create(
-                            product=product,
-                            size=size,
-                            stock=stock
-                        )
-                    except Size.DoesNotExist:
-                        continue  # O podrías lanzar un error personalizado
-
-            except json.JSONDecodeError:
-                pass  # Manejo opcional de error
+        # Reemplazar imágenes adicionales si se suben nuevas
+        additional_images = self.request.FILES.getlist("additional_images")
+        if additional_images:
+            product.additional_images.all().delete()
+            for image in additional_images:
+                ProductImage.objects.create(product=product, image=image)
             
 
 class CategoryView(viewsets.ModelViewSet):

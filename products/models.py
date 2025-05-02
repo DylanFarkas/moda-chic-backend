@@ -29,7 +29,7 @@ class Product(models.Model):
     description = models.TextField()
     price = models.DecimalField(max_digits=8, decimal_places=2)
     material = models.CharField(max_length=100)
-    image = models.ImageField(upload_to='imgs', null=True, blank=True)
+    main_image = models.ImageField(upload_to='imgs/main_imgs', null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(default=timezone.now)
 
@@ -46,3 +46,10 @@ class ProductSizeStock(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.size.name} ({self.stock})"
+    
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, related_name='additional_images', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='imgs/additional_imgs')
+    
+    def __str__(self):
+        return f"Imagen de {self.product.name}"
