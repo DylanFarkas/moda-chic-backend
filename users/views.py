@@ -1,9 +1,10 @@
-from rest_framework import generics, status
+from products.models import Product
+from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User
-from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
+from .models import User, Wishlist
+from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, WishlistSerializer
 from django.contrib.auth import authenticate
 from django.conf import settings
 from django.core.mail import send_mail
@@ -11,6 +12,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from .serializers import PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+from rest_framework.permissions import IsAuthenticated
 
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
@@ -101,3 +103,16 @@ class PasswordResetConfirmView(APIView):
         user.save()
 
         return Response({"detail": "Contraseña actualizada correctamente"}, status=status.HTTP_200_OK)
+
+class WishlistView(viewsets.ModelViewSet):
+    queryset = Wishlist.objects.all()
+    serializer_class = WishlistSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        print(f'Usuario autenticado: {self.request.user} ({self.request.user.id})')
+        return Wishlist.objects.filter(user=self.request.user).select_related('product')
+
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

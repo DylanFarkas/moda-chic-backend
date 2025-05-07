@@ -43,7 +43,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'users',
     'products',
-    
 ]
 
 REST_FRAMEWORK = {
@@ -51,6 +50,8 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
+
+AUTH_USER_MODEL = 'users.User'
 
 AUTHENTICATION_BACKENDS = [
     'users.backends.EmailBackend', 
