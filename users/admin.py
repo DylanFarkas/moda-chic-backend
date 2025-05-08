@@ -1,10 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Wishlist, Cart
+from .models import CartItem, User, Wishlist, Cart
 
 # Register your models here.
 admin.site.register(Wishlist)
 admin.site.register(Cart)
+admin.site.register(CartItem)
 
 class CustomUserAdmin(BaseUserAdmin):
     model = User

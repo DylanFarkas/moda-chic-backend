@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.db.models import Sum, F
 
 # Create your models here.
 class CustomUserManager(BaseUserManager):
@@ -70,10 +71,25 @@ class Cart(models.Model):
     user = models.OneToOneField("users.User", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     
+    def __str__(self):
+        return f"Carrito de {self.user.username}"
+    
+    def total_price(self):
+        return self.items.aggregate(
+            total=Sum(F('product__price') * F('quantity'))
+        )['total'] or 0
+    
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey("products.Product", on_delete=models.CASCADE)
+    size = models.ForeignKey("products.Size", on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
+
+    class Meta:
+        unique_together = ('cart', 'product', 'size')  
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name} ({self.size.name}) - Carrito de {self.cart.user.username}"
     
 class Order(models.Model):
     user = models.ForeignKey("users.User", on_delete=models.CASCADE)
