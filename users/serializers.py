@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import User, Wishlist
+from .models import Cart, CartItem, User, Wishlist
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -78,3 +78,41 @@ class WishlistSerializer(serializers.ModelSerializer):
         if obj.product and obj.product.main_image:
             return request.build_absolute_uri(obj.product.main_image.url)
         return None
+    
+class CartItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.SerializerMethodField()
+    product_price = serializers.SerializerMethodField()
+    product_image = serializers.SerializerMethodField()
+    size_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'cart', 'product', 'size', 'quantity', 'product_name', 'product_price', 'product_image', 'size_name']
+        read_only_fields = ['cart']
+
+    def get_product_name(self, obj):
+        return obj.product.name
+
+    def get_product_price(self, obj):
+        return obj.product.price
+
+    def get_size_name(self, obj):
+        return obj.size.name
+    
+    def get_product_image(self, obj):
+        request = self.context.get('request')
+        if obj.product and obj.product.main_image:
+            return request.build_absolute_uri(obj.product.main_image.url)
+        return None
+
+class CartSerializer(serializers.ModelSerializer):
+    items = CartItemSerializer(many=True, read_only=True)
+    total_price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Cart
+        fields = ['id', 'user', 'created_at', 'items', 'total_price']
+        read_only_fields = ['user']
+
+    def get_total_price(self, obj):
+        return obj.total_price()
