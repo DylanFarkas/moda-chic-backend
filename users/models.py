@@ -1,6 +1,8 @@
+from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db.models import Sum, F
+from products.models import Product, Size
 
 # Create your models here.
 class CustomUserManager(BaseUserManager):
@@ -92,9 +94,12 @@ class CartItem(models.Model):
         return f"{self.quantity} x {self.product.name} ({self.size.name}) - Carrito de {self.cart.user.username}"
     
 class Order(models.Model):
-    user = models.ForeignKey("users.User", on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    nombre = models.CharField(max_length=255, default="sin nombre")
+    email = models.EmailField(null=True)
+    telefono = models.CharField(max_length=20, default="sin telefono")
+    direccion = models.TextField(default="sin direccion")
+    created_at = models.DateTimeField(default=timezone.now)
+    
     STATUS_CHOICES = [
         ('pending', 'Pendiente'),
         ('paid', 'Pagado'),
@@ -104,10 +109,16 @@ class Order(models.Model):
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     
+    def __str__(self):
+        return f"Orden #{self.id} - {self.nombre}"
+    
 class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey("products.Product", on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    size = models.ForeignKey(Size, on_delete=models.SET_NULL, null=True)
     quantity = models.PositiveIntegerField()
-    price = models.DecimalField(max_digits=8, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.order} - {self.quantity} x {self.product.name} ({self.size.name})"
     
     

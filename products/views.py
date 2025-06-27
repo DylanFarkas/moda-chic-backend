@@ -1,7 +1,9 @@
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser, FormParser
 from .serializer import ProductSerializer, CategorySerializer, SizeSerializer
-from .models import Product, Category, Size, ProductSizeStock, ProductImage
+from .models import Product, Category, Size, ProductImage, ProductSizeStock
+
+
 import json
 
 class ProductView(viewsets.ModelViewSet):
@@ -58,3 +60,4 @@ class CategoryView(viewsets.ModelViewSet):
 class SizeView(viewsets.ModelViewSet):
     serializer_class = SizeSerializer
     queryset = Size.objects.all().order_by("id")
+

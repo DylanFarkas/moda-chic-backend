@@ -1,6 +1,6 @@
 from django.urls import path, include
 from products import views
-from .views import CartItemView, CartView, RegisterView, LoginView, UserListView, WishlistView
+from .views import CartItemView, CartView, RegisterView, LoginView, UserListView, WishlistView, OrderView
 from .views import PasswordResetRequestView, PasswordResetConfirmView
 from rest_framework import routers
 
@@ -9,6 +9,8 @@ router = routers.DefaultRouter()
 router.register(r'wishlist', WishlistView, 'wishlist')
 router.register(r'cart', CartView, 'cart')
 router.register(r'cart-items', CartItemView, 'cart-items')
+router.register(r'orders', OrderView, 'orders')
+
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),

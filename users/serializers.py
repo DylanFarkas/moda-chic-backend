@@ -1,11 +1,12 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import Cart, CartItem, User, Wishlist
+from users.models import Order, OrderItem
+from products.models import ProductSizeStock
+from .models import Cart, CartItem, Order, OrderItem, User, Wishlist
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 import re
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -116,3 +117,54 @@ class CartSerializer(serializers.ModelSerializer):
 
     def get_total_price(self, obj):
         return obj.total_price()
+    
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    size_name = serializers.CharField(source='size.name', read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ['product', 'product_name', 'size', 'size_name', 'quantity']
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = ['id', 'nombre', 'email', 'telefono', 'direccion', 'created_at', 'items']
+        
+    def get_items(self, obj):
+        order_items = OrderItem.objects.filter(order=obj)
+        return OrderItemSerializer(order_items, many=True).data
+
+
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+
+        # Crear la orden
+        order = Order.objects.create(**validated_data)
+
+        for item in items_data:
+            product = item['product']
+            size = item['size']
+            quantity = item['quantity']
+
+            # Verificar y descontar stock
+            stock_item = ProductSizeStock.objects.get(product=product, size=size)
+            if stock_item.stock < quantity:
+                raise serializers.ValidationError(
+                    f"Stock insuficiente para {product.name} talla {size.name}"
+                )
+            stock_item.stock -= quantity
+            stock_item.save()
+
+            # Crear OrderItem
+            OrderItem.objects.create(
+                order=order,
+                product=product,
+                size=size,
+                quantity=quantity
+            )
+
+        return order
