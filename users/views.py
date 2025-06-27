@@ -1,10 +1,11 @@
-from products.models import Product
+import json
+from products.models import Product, ProductSizeStock, Size
 from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Cart, CartItem, User, Wishlist
-from .serializers import CartItemSerializer, CartSerializer, RegisterSerializer, LoginSerializer, UserSerializer, WishlistSerializer
+from .models import Cart, CartItem, Order, OrderItem, User, Wishlist
+from .serializers import CartItemSerializer, CartSerializer, OrderSerializer, RegisterSerializer, LoginSerializer, UserSerializer, WishlistSerializer
 from django.contrib.auth import authenticate
 from django.conf import settings
 from django.core.mail import send_mail
@@ -13,6 +14,8 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from .serializers import PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 from rest_framework.permissions import IsAuthenticated
+from django.db import transaction
+from django.shortcuts import redirect
 
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
@@ -137,3 +140,62 @@ class CartItemView(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         cart, _ = Cart.objects.get_or_create(user=self.request.user)
         serializer.save(cart=cart)
+
+
+
+@transaction.atomic
+def finalizar_compra(request):
+    data = json.loads(request.body)
+
+    # Crear la orden
+    order = Order.objects.create(
+        full_name=data['full_name'],
+        email=data['email'],
+        phone=data['phone'],
+        address=data['address'],
+    )
+
+    message_lines = [
+        f"Nuevo pedido de: {order.full_name}",
+        f"📍 Dirección: {order.address}",
+        f"📞 Teléfono: {order.phone}",
+        f"✉️ Email: {order.email}",
+        "🛒 Productos:"
+    ]
+
+    for item in data['cart']:  # cart = [{product_id, size_id, quantity}]
+        product = Product.objects.get(id=item['product_id'])
+        size = Size.objects.get(id=item['size_id'])
+        stock_item = ProductSizeStock.objects.get(product=product, size=size)
+
+        if stock_item.stock < item['quantity']:
+            raise Exception(f"Stock insuficiente para {product.name} talla {size.name}")
+
+        # Descontar stock
+        stock_item.stock -= item['quantity']
+        stock_item.save()
+
+        # Crear item de orden
+        OrderItem.objects.create(
+            order=order,
+            product=product,
+            size=size,
+            quantity=item['quantity']
+        )
+
+        message_lines.append(f"- {product.name} talla {size.name} x {item['quantity']}")
+
+    # Crear el mensaje de WhatsApp
+    mensaje = "\n".join(message_lines)
+    telefono_empresa = '573128601430'  # Tu número de WhatsApp (con código de país)
+    url = f"https://api.whatsapp.com/send?phone={telefono_empresa}&text={mensaje}"
+
+    return redirect(url)
+
+
+class OrderView(viewsets.ModelViewSet):
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Order.objects.filter(email=self.request.user.email).order_by('-created_at')

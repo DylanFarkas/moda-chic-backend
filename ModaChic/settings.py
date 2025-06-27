@@ -115,7 +115,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'HOST': 'localhost',
-        'PORT': '5432',
+        'PORT': '5433',
         'NAME': 'modachic-db',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
