@@ -132,7 +132,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'nombre', 'email', 'telefono', 'direccion', 'created_at', 'items']
+        fields = ['id', 'nombre', 'email', 'telefono', 'direccion', 'created_at', 'items', 'status']
         
     def get_items(self, obj):
         order_items = OrderItem.objects.filter(order=obj)

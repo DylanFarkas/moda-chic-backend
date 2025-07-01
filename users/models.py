@@ -94,6 +94,7 @@ class CartItem(models.Model):
         return f"{self.quantity} x {self.product.name} ({self.size.name}) - Carrito de {self.cart.user.username}"
     
 class Order(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', null=True, blank=True)
     nombre = models.CharField(max_length=255, default="sin nombre")
     email = models.EmailField(null=True)
     telefono = models.CharField(max_length=20, default="sin telefono")
