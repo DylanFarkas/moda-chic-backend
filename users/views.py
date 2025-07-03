@@ -4,6 +4,8 @@ from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from users.utils import enviar_factura_por_correo
 from .models import Cart, CartItem, Order, OrderItem, User, Wishlist
 from .serializers import CartItemSerializer, CartSerializer, OrderSerializer, RegisterSerializer, LoginSerializer, UserSerializer, WishlistSerializer
 from django.contrib.auth import authenticate
@@ -192,8 +194,13 @@ def finalizar_compra(request):
 
     return redirect(url)
 
-
+    
 class OrderView(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by("id")
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        if instance.status == "paid":
+            enviar_factura_por_correo(instance)
