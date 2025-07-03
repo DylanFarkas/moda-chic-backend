@@ -50,6 +50,7 @@ class LoginSerializer(serializers.Serializer):
         raise serializers.ValidationError("Credenciales inválidas")
 
 
+
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
@@ -58,6 +59,8 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     token = serializers.CharField()
     new_password = serializers.CharField(write_only=True)
     
+
+
 class WishlistSerializer(serializers.ModelSerializer):
     product_name = serializers.SerializerMethodField()
     product_price = serializers.SerializerMethodField()
@@ -79,6 +82,8 @@ class WishlistSerializer(serializers.ModelSerializer):
         if obj.product and obj.product.main_image:
             return request.build_absolute_uri(obj.product.main_image.url)
         return None
+    
+
     
 class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.SerializerMethodField()
