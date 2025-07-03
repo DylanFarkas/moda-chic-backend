@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.db.models import Avg
 
 # Create your models here.
 
@@ -35,6 +36,12 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+    
+    @property
+    def average_rating(self):
+        average = self.reviews.aggregate(avg_rating=Avg("rating"))["avg_rating"]
+        return round(average, 1) if average else 0
+    
     
 class ProductSizeStock(models.Model):
     product = models.ForeignKey(Product, related_name='size_stock', on_delete=models.CASCADE)

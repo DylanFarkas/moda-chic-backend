@@ -4,10 +4,9 @@ from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-
 from users.utils import enviar_factura_por_correo
-from .models import Cart, CartItem, Order, OrderItem, User, Wishlist
-from .serializers import CartItemSerializer, CartSerializer, OrderSerializer, RegisterSerializer, LoginSerializer, UserSerializer, WishlistSerializer
+from .models import Cart, CartItem, Order, OrderItem, Review, User, Wishlist
+from .serializers import CartItemSerializer, CartSerializer, OrderSerializer, RegisterSerializer, LoginSerializer, UserSerializer, WishlistSerializer, ReviewSerializer
 from django.contrib.auth import authenticate
 from django.conf import settings
 from django.core.mail import send_mail
@@ -15,7 +14,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from .serializers import PasswordResetRequestSerializer, PasswordResetConfirmSerializer
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated,IsAuthenticatedOrReadOnly
 from django.db import transaction
 from django.shortcuts import redirect
 
@@ -204,3 +203,19 @@ class OrderView(viewsets.ModelViewSet):
         instance = serializer.save()
         if instance.status == "paid":
             enviar_factura_por_correo(instance)
+
+
+class ReviewView(viewsets.ModelViewSet):
+    queryset = Review.objects.all().order_by('-created_at')
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+        
+    def get_queryset(self):
+        product_id = self.request.query_params.get('product')
+        if product_id:
+            return Review.objects.filter(product_id=product_id).order_by('-created_at')
+        return Review.objects.none()
+    

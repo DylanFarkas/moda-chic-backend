@@ -30,7 +30,14 @@ class ProductSerializer(serializers.ModelSerializer):
     #image = serializers.ImageField(required=False, allow_null=True)
     size_stock = ProductSizeStockSerializer(many=True, read_only=True)
     additional_images = ProductImageSerializer(many=True, read_only=True)
-    
+    average_rating = serializers.FloatField(read_only=True)
+
+
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = [
+        'id', 'name', 'description', 'price', 'material',
+        'main_image', 'category', 'category_name',
+        'created_at', 'size_stock', 'additional_images',
+        'average_rating',
+    ]
