@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from users.models import Order, OrderItem
 from products.models import ProductSizeStock
-from .models import Cart, CartItem, Order, OrderItem, User, Wishlist
+from .models import Cart, CartItem, Order, OrderItem, Review, User, Wishlist
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -50,6 +50,7 @@ class LoginSerializer(serializers.Serializer):
         raise serializers.ValidationError("Credenciales inválidas")
 
 
+
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
@@ -58,6 +59,8 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     token = serializers.CharField()
     new_password = serializers.CharField(write_only=True)
     
+
+
 class WishlistSerializer(serializers.ModelSerializer):
     product_name = serializers.SerializerMethodField()
     product_price = serializers.SerializerMethodField()
@@ -79,6 +82,8 @@ class WishlistSerializer(serializers.ModelSerializer):
         if obj.product and obj.product.main_image:
             return request.build_absolute_uri(obj.product.main_image.url)
         return None
+    
+
     
 class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.SerializerMethodField()
@@ -168,3 +173,12 @@ class OrderSerializer(serializers.ModelSerializer):
             )
 
         return order
+    
+class ReviewSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source="user.username", read_only=True)
+    
+    class Meta:
+        model = Review
+        fields = ['id', 'user', 'user_name', 'product', 'rating', 'comment', 'created_at']
+        read_only_fields = ['id', 'created_at', 'user', 'user_name']
+        

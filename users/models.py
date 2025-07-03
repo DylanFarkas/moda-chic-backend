@@ -3,6 +3,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db.models import Sum, F
 from products.models import Product, Size
+from django.core.validators import MinValueValidator, MaxValueValidator
+
 
 # Create your models here.
 class CustomUserManager(BaseUserManager):
@@ -64,10 +66,13 @@ class Wishlist(models.Model):
     
 class Review(models.Model):
     user = models.ForeignKey("users.User", on_delete=models.CASCADE)
-    product = models.ForeignKey("products.Product", on_delete=models.CASCADE)
-    rating = models.PositiveIntegerField()
+    product = models.ForeignKey("products.Product", on_delete=models.CASCADE, related_name="reviews")
+    rating = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Review by {self.user} on {self.product} - {self.rating}⭐"
     
 class Cart(models.Model):
     user = models.OneToOneField("users.User", on_delete=models.CASCADE)
