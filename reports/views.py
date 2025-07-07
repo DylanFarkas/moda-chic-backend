@@ -70,3 +70,38 @@ def top_products_report(request):
             "total": round(p['product__price'] * p['total_sold'], 2)
         } for p in top_products
     ])
+    
+@api_view(['GET'])
+#@permission_classes([IsAdminUser])
+def sales_by_category_report(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    if not start_date or not end_date:
+        return Response({
+            "error": "Debe proporcionar start_date y end_date en el formato YYYY-MM-DD"
+        }, status=400)
+
+    try:
+        items = OrderItem.objects.filter(order__status__in=['paid', 'shipped', 'delivered'])
+
+        items = items.filter(order__created_at__date__range=[start_date, end_date])
+
+        data = (
+            items
+            .values('product__category__name')
+            .annotate(total=Sum(F('quantity') * F('product__price')))
+            .order_by('-total')
+        )
+
+        return Response([
+            {
+                "category": c['product__category__name'],
+                "total": round(c['total'], 2)
+            }
+            for c in data
+        ])
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return Response({"error": str(e)}, status=500)

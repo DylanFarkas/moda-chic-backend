@@ -127,44 +127,56 @@ class CartSerializer(serializers.ModelSerializer):
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
     size_name = serializers.CharField(source='size.name', read_only=True)
+    price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
+    total = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
-        fields = ['product', 'product_name', 'size', 'size_name', 'quantity']
+        fields = ['product', 'product_name', 'size', 'size_name', 'quantity', 'price', 'total']
+        
+    def get_total(self, obj):
+        return round(obj.product.price * obj.quantity, 2)
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
+    total_order = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
-        fields = ['id', 'nombre', 'email', 'telefono', 'direccion', 'created_at', 'items', 'status']
+        fields = ['id', 'nombre', 'email', 'telefono', 'departamento', 'ciudad', 'direccion', 'created_at', 'items', 'status', 'total_order']
         
     def get_items(self, obj):
         order_items = OrderItem.objects.filter(order=obj)
         return OrderItemSerializer(order_items, many=True).data
+    
+    def get_total_order(self, obj):
+        return round(sum(item.product.price * item.quantity for item in obj.items.all()), 2)
 
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
 
-        # Crear la orden
-        order = Order.objects.create(**validated_data)
-
+        # Verificar stock antes de crear la orden
         for item in items_data:
             product = item['product']
             size = item['size']
             quantity = item['quantity']
 
-            # Verificar y descontar stock
             stock_item = ProductSizeStock.objects.get(product=product, size=size)
             if stock_item.stock < quantity:
                 raise serializers.ValidationError(
                     f"Stock insuficiente para {product.name} talla {size.name}"
                 )
-            stock_item.stock -= quantity
-            stock_item.save()
 
-            # Crear OrderItem
+        # Crear la orden
+        order = Order.objects.create(**validated_data)
+
+        # Crear items y descontar stock
+        for item in items_data:
+            product = item['product']
+            size = item['size']
+            quantity = item['quantity']
+
             OrderItem.objects.create(
                 order=order,
                 product=product,
@@ -172,8 +184,12 @@ class OrderSerializer(serializers.ModelSerializer):
                 quantity=quantity
             )
 
+            stock_item = ProductSizeStock.objects.get(product=product, size=size)
+            stock_item.stock -= quantity
+            stock_item.save()
+
         return order
-    
+
 class ReviewSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source="user.username", read_only=True)
     
