@@ -104,6 +104,8 @@ class Order(models.Model):
     email = models.EmailField(null=True)
     telefono = models.CharField(max_length=20, default="sin telefono")
     direccion = models.TextField(default="sin direccion")
+    departamento = models.CharField(max_length=100, default="sin departamento")
+    ciudad = models.CharField(max_length=100, default="sin ciudad")
     created_at = models.DateTimeField(default=timezone.now)
     
     STATUS_CHOICES = [

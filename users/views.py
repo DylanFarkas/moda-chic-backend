@@ -17,6 +17,7 @@ from .serializers import PasswordResetRequestSerializer, PasswordResetConfirmSer
 from rest_framework.permissions import IsAuthenticated,IsAuthenticatedOrReadOnly
 from django.db import transaction
 from django.shortcuts import redirect
+from rest_framework import serializers
 
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
@@ -195,16 +196,33 @@ def finalizar_compra(request):
 
     
 class OrderView(viewsets.ModelViewSet):
-    queryset = Order.objects.all().order_by("id")
+    queryset = Order.objects.all().order_by("-id")
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
 
     def perform_update(self, serializer):
+        order = self.get_object()
+        old_status = order.status
+
+        # Bloquear modificaciones si ya está cancelada
+        if old_status == "cancelled":
+            raise serializers.ValidationError("No se puede modificar una orden que ya fue cancelada.")
+
         instance = serializer.save()
-        if instance.status == "paid":
+        new_status = instance.status
+
+        # Reponer stock si se cancela (sin importar estado anterior)
+        if new_status == "cancelled":
+            for item in instance.items.all():
+                stock_item = ProductSizeStock.objects.get(product=item.product, size=item.size)
+                stock_item.stock += item.quantity
+                stock_item.save()
+
+        # Enviar factura si se paga (sin tocar stock)
+        if old_status != "paid" and new_status == "paid":
             enviar_factura_por_correo(instance)
 
-
+            
 class ReviewView(viewsets.ModelViewSet):
     queryset = Review.objects.all().order_by('-created_at')
     serializer_class = ReviewSerializer

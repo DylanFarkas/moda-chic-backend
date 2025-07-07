@@ -23,59 +23,81 @@ def enviar_factura_por_correo(order):
     <head>
         <meta charset="utf-8">
         <style>
-            body {{
-                font-family: 'Arial', sans-serif;
+            @page {{
+                size: A4;
                 margin: 40px;
+            }}
+            body {{
+                font-family: 'Helvetica', sans-serif;
                 color: #333;
             }}
             .header {{
                 display: flex;
                 align-items: center;
-                border-bottom: 2px solid #e4e4e4;
+                justify-content: space-between;
+                border-bottom: 2px solid #ddd;
                 padding-bottom: 10px;
-                margin-bottom: 0;
             }}
             .logo {{
-                height: 250px;
-                margin-right: 20px;
+                height: 120px;
+            }}
+            .company-info {{
+                text-align: right;
+                font-size: 12px;
             }}
             .title {{
-                font-size: 30px;
+                font-size: 24px;
+                margin-top: 30px;
+                margin-bottom: 30px;
+                text-align: center;
+                color: #b76e79;
             }}
             .info {{
-                font-size: 20px;
-                margin-bottom: 20px;
-            }}
-            .info p {{
-                margin: 4px 0;
+                font-size: 14px;
+                margin-top: 20px;
+                line-height: 1.1;
             }}
             table {{
                 width: 100%;
                 border-collapse: collapse;
                 margin-top: 20px;
-                 font-size: 15px;
+                font-size: 13px;
             }}
             th {{
-                background-color: #2980BA;
+                background-color: #f8e1e7;
                 color: #000;
-                padding: 5px;
+                padding: 8px;
                 border: 1px solid #ccc;
+                text-align: left;
             }}
             td {{
-                padding: 5px;
+                padding: 8px;
                 border: 1px solid #ddd;
             }}
-            .total {{
+            .total-box {{
+                margin-top: 30px;
                 text-align: right;
-                font-size: 20px;
+                font-size: 16px;
                 font-weight: bold;
-                margin-top: 20px;
+                border-top: 2px solid #333;
+                padding-top: 10px;
+            }}
+            .footer {{
+                margin-top: 40px;
+                font-size: 12px;
+                text-align: center;
+                color: #999;
             }}
         </style>
     </head>
     <body>
         <div class="header">
             <img src="media/logo.png" alt="Moda Chic Logo" class="logo">
+            <div class="company-info">
+                <strong>Moda Chic</strong><br>
+                ventas@modachic.com<br>
+                www.modachic.com
+            </div>
         </div>
 
         <h2 class="title">Factura de compra</h2>
@@ -85,6 +107,8 @@ def enviar_factura_por_correo(order):
             <p><strong>Cliente:</strong> {order.nombre}</p>
             <p><strong>Email:</strong> {order.email}</p>
             <p><strong>Teléfono:</strong> {order.telefono}</p>
+            <p><strong>Departamento:</strong> {order.departamento}</p>
+            <p><strong>Municipio:</strong> {order.ciudad}</p>
             <p><strong>Dirección:</strong> {order.direccion}</p>
             <p><strong>Fecha:</strong> {order.created_at.strftime('%Y-%m-%d')}</p>
         </div>
@@ -104,10 +128,18 @@ def enviar_factura_por_correo(order):
             </tbody>
         </table>
 
-        <p class="total">Total: ${total:.2f}</p>
+        <p class="total-box">
+            Total: ${total:.2f}
+        </p>
+
+        <div class="footer">
+            Gracias por comprar en <strong>Moda Chic</strong> 💖<br>
+            Síguenos en Instagram @modachic o visita www.modachic.com
+        </div>
     </body>
     </html>
     """
+
 
 
     pdf_buffer = BytesIO()
