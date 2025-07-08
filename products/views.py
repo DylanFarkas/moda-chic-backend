@@ -12,7 +12,8 @@ class ProductView(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser]
 
     def perform_create(self, serializer):
-        product = serializer.save()
+        product = serializer.save(main_image=self.request.FILES.get('main_image'))
+
 
         # Tallas y stock
         sizes_json = self.request.data.get("sizes_json")

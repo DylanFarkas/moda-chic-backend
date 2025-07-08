@@ -36,7 +36,8 @@ class ProductSerializer(serializers.ModelSerializer):
     additional_images = ProductImageSerializer(many=True, read_only=True)
     average_rating = serializers.FloatField(read_only=True)
     
-    main_image = serializers.SerializerMethodField()
+    main_image = serializers.ImageField(required=False, allow_null=True)
+
 
 
     class Meta:
@@ -50,3 +51,12 @@ class ProductSerializer(serializers.ModelSerializer):
         
     def get_main_image(self, obj):
         return obj.main_image.url if obj.main_image else None
+    
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.main_image:
+            data['main_image'] = instance.main_image.url
+        else:
+            data['main_image'] = None
+        return data
