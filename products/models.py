@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.db.models import Avg
+from cloudinary.models import CloudinaryField
 
 # Create your models here.
 
@@ -30,7 +31,7 @@ class Product(models.Model):
     description = models.TextField()
     price = models.DecimalField(max_digits=8, decimal_places=2)
     material = models.CharField(max_length=100)
-    main_image = models.ImageField(upload_to='imgs/main_imgs', null=True, blank=True)
+    main_image = CloudinaryField('image', blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(default=timezone.now)
 
@@ -56,7 +57,7 @@ class ProductSizeStock(models.Model):
     
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='additional_images', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='imgs/additional_imgs')
+    image = CloudinaryField('image')
     
     def __str__(self):
         return f"Imagen de {self.product.name}"
