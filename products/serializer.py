@@ -20,9 +20,13 @@ class ProductSizeStockSerializer(serializers.ModelSerializer):
         fields = ['size', 'stock']
         
 class ProductImageSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
     class Meta:
         model = ProductImage
-        fields = '__all__'
+        fields = ['id', 'image']
+        
+    def get_image(self, obj):
+        return obj.image.url if obj.image else None
         
 class ProductSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
@@ -31,6 +35,9 @@ class ProductSerializer(serializers.ModelSerializer):
     size_stock = ProductSizeStockSerializer(many=True, read_only=True)
     additional_images = ProductImageSerializer(many=True, read_only=True)
     average_rating = serializers.FloatField(read_only=True)
+    
+    main_image = serializers.ImageField(required=False, allow_null=True)
+
 
 
     class Meta:
@@ -41,3 +48,15 @@ class ProductSerializer(serializers.ModelSerializer):
         'created_at', 'size_stock', 'additional_images',
         'average_rating',
     ]
+        
+    def get_main_image(self, obj):
+        return obj.main_image.url if obj.main_image else None
+    
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.main_image:
+            data['main_image'] = instance.main_image.url
+        else:
+            data['main_image'] = None
+        return data
